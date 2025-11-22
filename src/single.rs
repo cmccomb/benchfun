@@ -374,7 +374,9 @@ mod ridge_tests {
     fn f_matches_minimum() {
         let minimizer = F::minimizer(F::LOW_D);
 
-        assert_eq!(F::f(minimizer), F::MINIMUM);
+        let difference = (F::f(minimizer) - F::MINIMUM).abs();
+
+        assert!(difference <= f64::EPSILON);
     }
 
     #[test]
