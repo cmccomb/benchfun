@@ -1,6 +1,8 @@
 //! This module contains single-objective functions
 
-use crate::{NDimensional, UnConstrained, UnBounded, Bounded, SingleObjective, FixedDimensional, Constrained};
+use crate::{
+    Bounded, Constrained, FixedDimensional, NDimensional, SingleObjective, UnBounded, UnConstrained,
+};
 
 /// This is the Sphere function.
 ///
@@ -21,11 +23,7 @@ impl SingleObjective for Sphere {
 
     /// Function for evaluating
     fn f(x: Vec<f64>) -> f64 {
-        let mut f = 0f64;
-        for xi in x {
-            f -= xi.powi(2);
-        }
-        f
+        x.into_iter().map(|xi| xi.powi(2)).sum::<f64>()
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -36,16 +34,16 @@ impl SingleObjective for Sphere {
 
 #[cfg(test)]
 mod sphere_tests {
-    use super::{Sphere as F, NDimensional, SingleObjective};
+    use super::{NDimensional, SingleObjective, Sphere as F};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -71,13 +69,14 @@ impl SingleObjective for Rastrigin {
     const MINIMUM: f64 = 0.0;
 
     /// Function for evaluating
+    #[allow(clippy::cast_precision_loss)]
     fn f(x: Vec<f64>) -> f64 {
         let a = 10.0;
-        let n = x.len() ;
-        let mut fx = a*(n as f64);
+        let n = x.len();
+        let mut fx = a * (n as f64);
 
         for xi in x {
-            fx += xi.powi(2) - a*(2.0*xi*std::f64::consts::PI).cos();
+            fx += xi.powi(2) - a * (2.0 * xi * std::f64::consts::PI).cos();
         }
         fx
     }
@@ -90,16 +89,16 @@ impl SingleObjective for Rastrigin {
 
 #[cfg(test)]
 mod rastrigin_tests {
-    use super::{Rastrigin as F, NDimensional, SingleObjective};
+    use super::{NDimensional, Rastrigin as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -128,8 +127,8 @@ impl SingleObjective for Rosenbrock {
     fn f(x: Vec<f64>) -> f64 {
         let n = x.len();
         let mut fx = 0.0;
-        for i in 0..(n-1) {
-            fx += 100.0*(x[i+1] - x[i].powi(2)).powi(2) + (1.0 - x[i]).powi(2);
+        for i in 0..(n - 1) {
+            fx += 100.0 * (x[i + 1] - x[i].powi(2)).powi(2) + (1.0 - x[i]).powi(2);
         }
         fx
     }
@@ -142,16 +141,16 @@ impl SingleObjective for Rosenbrock {
 
 #[cfg(test)]
 mod rosenbrock_tests {
-    use super::{Rosenbrock as F, NDimensional, SingleObjective};
+    use super::{NDimensional, Rosenbrock as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -177,17 +176,18 @@ impl SingleObjective for Ackley {
     const MINIMUM: f64 = 0.0;
 
     /// Function for evaluating
+    #[allow(clippy::cast_precision_loss)]
     fn f(x: Vec<f64>) -> f64 {
-        let n=x.len();
+        let n = x.len();
         let mut fx = 0.0;
         let mut square_sum = 0.0;
         let mut cosine_sum = 0.0;
         for xi in x {
             square_sum += xi.powi(2);
-            cosine_sum += (2.0*std::f64::consts::PI*xi).cos();
+            cosine_sum += (2.0 * std::f64::consts::PI * xi).cos();
         }
-        fx += -20.0*(-0.2*(0.5*square_sum).sqrt()).exp();
-        fx -= (cosine_sum/(n as f64)).exp();
+        fx -= 20.0 * (-0.2 * (0.5 * square_sum).sqrt()).exp();
+        fx -= (cosine_sum / (n as f64)).exp();
         fx + std::f64::consts::E + 20.0
     }
 
@@ -203,12 +203,12 @@ mod ackley_tests {
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -235,13 +235,10 @@ impl SingleObjective for Matyas {
 
     /// Function for evaluating
     fn f(x: Vec<f64>) -> f64 {
-        let mut square_sum = 0.0;
-        let mut prod = 1.0;
-        for xi in x {
-            square_sum += xi.powi(2);
-            prod *= xi;
-        }
-        0.26*square_sum - 0.48*prod
+        let (square_sum, prod) = x
+            .into_iter()
+            .fold((0.0, 1.0), |(sum, prod), xi| (sum + xi.powi(2), prod * xi));
+        0.26 * square_sum - 0.48 * prod
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -256,12 +253,12 @@ mod matyas_tests {
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -287,14 +284,15 @@ impl SingleObjective for Griewank {
     const MINIMUM: f64 = 0.0;
 
     /// Function for evaluating
+    #[allow(clippy::cast_precision_loss)]
     fn f(x: Vec<f64>) -> f64 {
         let mut cosine_prod = 1.0;
         let mut square_sum = 0.0;
         for (i, xi) in x.iter().enumerate() {
             square_sum += xi.powi(2);
-            cosine_prod *= (xi/((i+1) as f64).sqrt()).cos();
+            cosine_prod *= (xi / ((i + 1) as f64).sqrt()).cos();
         }
-        1.0 + square_sum/4000.0 - cosine_prod
+        1.0 + square_sum / 4000.0 - cosine_prod
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -309,12 +307,12 @@ mod griewank_tests {
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -360,16 +358,16 @@ impl SingleObjective for Ridge {
 
 #[cfg(test)]
 mod ridge_tests {
-    use super::{Ridge as F, NDimensional, SingleObjective};
+    use super::{NDimensional, Ridge as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -395,12 +393,13 @@ impl SingleObjective for Zakharov {
     const MINIMUM: f64 = 0.0;
 
     /// Function for evaluating
+    #[allow(clippy::cast_precision_loss)]
     fn f(x: Vec<f64>) -> f64 {
         let mut square_sum: f64 = 0.0;
         let mut sum_ixi: f64 = 0.0;
         for (i, xi) in x.iter().enumerate() {
             square_sum += xi.powi(2);
-            sum_ixi += 0.5*xi*(i as f64);
+            sum_ixi += 0.5 * xi * (i as f64);
         }
         square_sum + sum_ixi.powi(2) + sum_ixi.powi(4)
     }
@@ -413,16 +412,16 @@ impl SingleObjective for Zakharov {
 
 #[cfg(test)]
 mod zakharov_tests {
-    use super::{Zakharov as F, NDimensional, SingleObjective};
+    use super::{NDimensional, SingleObjective, Zakharov as F};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -453,7 +452,7 @@ impl SingleObjective for Salomon {
         for xi in x {
             square_sum += xi.powi(2);
         }
-        1.0 - (2.0*std::f64::consts::PI*square_sum.sqrt()).cos() + 0.1*square_sum.sqrt()
+        1.0 - (2.0 * std::f64::consts::PI * square_sum.sqrt()).cos() + 0.1 * square_sum.sqrt()
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -464,16 +463,16 @@ impl SingleObjective for Salomon {
 
 #[cfg(test)]
 mod salomon_tests {
-    use super::{Salomon as F, NDimensional, SingleObjective};
+    use super::{NDimensional, Salomon as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::LOW_D)
+        F::check_minimizer(F::LOW_D);
     }
 
     #[test]
     fn high_d() {
-        F::check_minimizer(F::HIGH_D)
+        F::check_minimizer(F::HIGH_D);
     }
 }
 
@@ -498,7 +497,7 @@ impl Constrained for RosenbrockConst1 {
 
     fn inequality_constraints(x: Vec<f64>) -> Vec<f64> {
         let mut fx: Vec<f64> = vec![0.0; Self::NG];
-        fx[0] = (x[0]-1.0).powi(3) - x[1] + 1.0;
+        fx[0] = (x[0] - 1.0).powi(3) - x[1] + 1.0;
         fx[1] = x[0] + x[1] - 2.0;
         fx
     }
@@ -515,7 +514,7 @@ impl SingleObjective for RosenbrockConst1 {
     /// Function for evaluating
     fn f(x: Vec<f64>) -> f64 {
         Self::check_input(x.clone());
-        (1.0 - x[0]).powi(2) + 100.0*(x[1] - x[0].powi(2)).powi(2)
+        (1.0 - x[0]).powi(2) + 100.0 * (x[1] - x[0].powi(2)).powi(2)
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -526,15 +525,13 @@ impl SingleObjective for RosenbrockConst1 {
 
 #[cfg(test)]
 mod rosenbrock_const1_tests {
-    use super::{RosenbrockConst1 as F, FixedDimensional, SingleObjective};
+    use super::{FixedDimensional, RosenbrockConst1 as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::D)
+        F::check_minimizer(F::D);
     }
 }
-
-
 
 /// This is a constrained version of the Rosenbrock function.
 ///
@@ -573,7 +570,7 @@ impl SingleObjective for RosenbrockConst2 {
     /// Function for evaluating
     fn f(x: Vec<f64>) -> f64 {
         Self::check_input(x.clone());
-        (1.0 - x[0]).powi(2) + 100.0*(x[1] - x[0].powi(2)).powi(2)
+        (1.0 - x[0]).powi(2) + 100.0 * (x[1] - x[0].powi(2)).powi(2)
     }
 
     /// This function returns the minimizer (argument that will return the global minimum
@@ -584,10 +581,10 @@ impl SingleObjective for RosenbrockConst2 {
 
 #[cfg(test)]
 mod rosenbrock_const2_tests {
-    use super::{RosenbrockConst2 as F, FixedDimensional, SingleObjective};
+    use super::{FixedDimensional, RosenbrockConst2 as F, SingleObjective};
 
     #[test]
     fn low_d() {
-        F::check_minimizer(F::D)
+        F::check_minimizer(F::D);
     }
 }

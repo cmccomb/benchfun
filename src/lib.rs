@@ -1,6 +1,5 @@
 #![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
-#![warn(clippy::all)]
+#![warn(clippy::pedantic)]
 
 //! The `benchfun` crate provides several common ***bench***marking ***fun***ctions that are commonly
 //! used to test new optimization algorithms. More specifically, the function is part of a struct
@@ -12,9 +11,8 @@ pub use multi::*;
 pub mod single;
 pub use single::*;
 
-
 /// This is a trait that ensures consistent implementation of single objective benchmark functions
-pub trait SingleObjective  {
+pub trait SingleObjective {
     /// The global minimum is constant and zero
     const MINIMUM: f64;
 
@@ -26,7 +24,7 @@ pub trait SingleObjective  {
 
     /// This function is used for testing, and checks the correctness of the minimizer
     fn check_minimizer(d: usize) {
-        assert!(Self::f(Self::minimizer(d)) - Self::MINIMUM < f64::EPSILON)
+        assert!((Self::f(Self::minimizer(d)) - Self::MINIMUM).abs() < f64::EPSILON);
     }
 }
 
@@ -45,6 +43,7 @@ pub trait Bounded {
     const BOUNDS: (f64, f64);
 
     /// Function to check bounds
+    #[must_use]
     fn in_bounds(x: Vec<f64>) -> bool {
         let mut in_bounds = true;
         for element in x {
@@ -63,6 +62,7 @@ pub trait UnBounded {
     const BOUNDS: (f64, f64) = (f64::INFINITY, f64::INFINITY);
 
     /// Function to check bounds
+    #[must_use]
     fn in_bounds(_x: Vec<f64>) -> bool {
         true
     }
@@ -86,11 +86,13 @@ pub trait Constrained {
     fn inequality_constraints(x: Vec<f64>) -> Vec<f64>;
 
     /// This is an alias for the equality constraint function
+    #[must_use]
     fn h(x: Vec<f64>) -> Vec<f64> {
         Self::equality_constraints(x)
     }
 
     /// This is an alias for the inequality constraint function
+    #[must_use]
     fn g(x: Vec<f64>) -> Vec<f64> {
         Self::inequality_constraints(x)
     }
@@ -120,9 +122,42 @@ pub trait FixedDimensional {
     const D: usize;
 
     /// This function is used to check inputs
-    fn check_input(x: Vec<f64>){
-        if x.len() != Self::D {
-            panic!("A vector with size {} was used with a function of dimensionality {}.", x.len(), Self::D);
-        }
+    fn check_input(x: Vec<f64>) {
+        assert_eq!(
+            x.len(),
+            Self::D,
+            "A vector with size {} was used with a function of dimensionality {}.",
+            x.len(),
+            Self::D
+        );
+    }
+}
+
+#[cfg(test)]
+mod lib_tests {
+    use super::{Bounded, FixedDimensional};
+
+    struct DummyBounds;
+
+    impl Bounded for DummyBounds {
+        const BOUNDS: (f64, f64) = (-1.0, 1.0);
+    }
+
+    struct DummyFixed;
+
+    impl FixedDimensional for DummyFixed {
+        const D: usize = 2;
+    }
+
+    #[test]
+    fn bounded_in_bounds_respects_limits() {
+        assert!(DummyBounds::in_bounds(vec![0.0, 0.5]));
+        assert!(!DummyBounds::in_bounds(vec![2.0, 0.0]));
+    }
+
+    #[test]
+    #[should_panic(expected = "A vector with size 3 was used with a function of dimensionality 2.")]
+    fn fixed_dimensional_panics_on_wrong_length() {
+        DummyFixed::check_input(vec![0.0, 1.0, 2.0]);
     }
 }

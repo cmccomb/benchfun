@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/cmccomb/benchfun.svg?branch=master)](https://travis-ci.org/cmccomb/benchfun)
+[![CI](https://github.com/cmccomb/benchfun/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/cmccomb/benchfun/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/benchfun.svg)](https://crates.io/crates/benchfun)
 [![docs.rs](https://docs.rs/benchfun/badge.svg)](https://docs.rs/benchfun)
 
@@ -12,15 +12,14 @@ This crate provides access to several single- and multi-objective funtions. For 
 
 
 # Example Usage
-Using this crate is easy! Simply add this crate as a dependency and then `use` it:
+Using this crate is easy! Simply add this crate as a dependency and then import the pieces you need explicitly:
 ```rust
-use benchfun::*;
+use benchfun::{single::Ackley, Bounded, SingleObjective};
 
 fn main() {
     // Print some info about the ackley function
     println!("Minmimum: {:?}", Ackley::MINIMUM);
     println!("Minmizer: {:?}", Ackley::minimizer(5));
-    println!("Minmizer: {:?}", single::Ackley::BOUNDS);
+    println!("Minmizer: {:?}", Ackley::BOUNDS);
 }
 ```
-You can also use a `use` statement that looks more like `use benchfun::{SingleObjective}` but that's just messy!
