@@ -476,6 +476,136 @@ mod salomon_tests {
     }
 }
 
+/// Himmelblau function.
+///
+/// The function is defined as `f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2` and has
+/// four global minima at `(3, 2)`, `(-2.805118, 3.131312)`, `(-3.779310, -3.283186)`, and
+/// `(3.584428, -1.848126)` where the function value is `0`.
+///
+/// # Examples
+/// ```
+/// use benchfun::{Himmelblau, SingleObjective};
+///
+/// let value = Himmelblau::f(vec![3.0, 2.0]);
+/// assert!((value - Himmelblau::MINIMUM).abs() < f64::EPSILON);
+/// ```
+pub struct Himmelblau {}
+
+impl FixedDimensional for Himmelblau {
+    const D: usize = 2;
+}
+
+impl UnConstrained for Himmelblau {}
+
+impl Bounded for Himmelblau {
+    /// The recommended search domain for the Himmelblau function.
+    const BOUNDS: (f64, f64) = (-6.0, 6.0);
+}
+
+impl SingleObjective for Himmelblau {
+    /// The global minimum value across all known minimizers.
+    const MINIMUM: f64 = 0.0;
+
+    /// Evaluates the Himmelblau function at the provided 2D point.
+    fn f(x: Vec<f64>) -> f64 {
+        Self::check_input(x.clone());
+        let x0 = x[0];
+        let x1 = x[1];
+        (x0.powi(2) + x1 - 11.0).powi(2) + (x0 + x1.powi(2) - 7.0).powi(2)
+    }
+
+    /// Returns one of the global minimizers `(3, 2)`.
+    fn minimizer(_n: usize) -> Vec<f64> {
+        vec![3.0, 2.0]
+    }
+}
+
+#[cfg(test)]
+mod himmelblau_tests {
+    use super::{Bounded, FixedDimensional, Himmelblau as F, SingleObjective};
+
+    #[test]
+    fn evaluates_known_minima() {
+        let minimizers = vec![
+            vec![3.0, 2.0],
+            vec![-2.805_118, 3.131_312],
+            vec![-3.779_310, -3.283_186],
+            vec![3.584_428, -1.848_126],
+        ];
+
+        for minimizer in minimizers {
+            assert!((F::f(minimizer.clone()) - F::MINIMUM).abs() < 1e-10);
+            assert!(F::in_bounds(minimizer));
+        }
+    }
+
+    #[test]
+    fn minimizer_respects_bounds() {
+        assert!(F::in_bounds(F::minimizer(F::D)));
+    }
+}
+
+/// Beale function.
+///
+/// The function is defined as
+/// `f(x, y) = (1.5 - x + xy)^2 + (2.25 - x + xy^2)^2 + (2.625 - x + xy^3)^2` and reaches a
+/// global minimum of `0` at `(3, 0.5)`.
+///
+/// # Examples
+/// ```
+/// use benchfun::{Beale, SingleObjective};
+///
+/// let value = Beale::f(vec![3.0, 0.5]);
+/// assert!((value - Beale::MINIMUM).abs() < f64::EPSILON);
+/// ```
+pub struct Beale {}
+
+impl FixedDimensional for Beale {
+    const D: usize = 2;
+}
+
+impl UnConstrained for Beale {}
+
+impl Bounded for Beale {
+    /// The recommended search domain for the Beale function.
+    const BOUNDS: (f64, f64) = (-4.5, 4.5);
+}
+
+impl SingleObjective for Beale {
+    /// The global minimum of the Beale function.
+    const MINIMUM: f64 = 0.0;
+
+    /// Evaluates the Beale function at the provided 2D point.
+    fn f(x: Vec<f64>) -> f64 {
+        Self::check_input(x.clone());
+        let x0 = x[0];
+        let x1 = x[1];
+        (1.5 - x0 + x0 * x1).powi(2)
+            + (2.25 - x0 + x0 * x1.powi(2)).powi(2)
+            + (2.625 - x0 + x0 * x1.powi(3)).powi(2)
+    }
+
+    /// Returns the canonical global minimizer `(3, 0.5)`.
+    fn minimizer(_n: usize) -> Vec<f64> {
+        vec![3.0, 0.5]
+    }
+}
+
+#[cfg(test)]
+mod beale_tests {
+    use super::{Beale as F, Bounded, FixedDimensional, SingleObjective};
+
+    #[test]
+    fn evaluates_global_minimum() {
+        assert!((F::f(vec![3.0, 0.5]) - F::MINIMUM).abs() < 1e-12);
+    }
+
+    #[test]
+    fn minimizer_respects_bounds() {
+        assert!(F::in_bounds(F::minimizer(F::D)));
+    }
+}
+
 /// This is a constrained version of the Rosenbrock function.
 ///
 /// The function is borrowed from [here](https://en.wikipedia.org/wiki/Test_functions_for_optimization).
