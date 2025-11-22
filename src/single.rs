@@ -186,7 +186,8 @@ impl SingleObjective for Ackley {
             square_sum += xi.powi(2);
             cosine_sum += (2.0 * std::f64::consts::PI * xi).cos();
         }
-        fx -= 20.0 * (-0.2 * (0.5 * square_sum).sqrt()).exp();
+        let mean_square = square_sum / (n as f64);
+        fx -= 20.0 * (-0.2 * mean_square.sqrt()).exp();
         fx -= (cosine_sum / (n as f64)).exp();
         fx + std::f64::consts::E + 20.0
     }
@@ -209,6 +210,20 @@ mod ackley_tests {
     #[test]
     fn high_d() {
         F::check_minimizer(F::HIGH_D);
+    }
+
+    #[test]
+    fn zero_vector_returns_minimum() {
+        let value = F::f(vec![0.0; F::LOW_D]);
+        assert!((value - F::MINIMUM).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn small_vector_matches_reference_value() {
+        let value = F::f(vec![0.1, 0.2]);
+        let expected = 1.591_889_516_716_467_f64;
+        let tolerance = 1e-12;
+        assert!((value - expected).abs() < tolerance);
     }
 }
 
