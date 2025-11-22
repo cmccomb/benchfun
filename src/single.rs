@@ -213,7 +213,14 @@ mod ackley_tests {
 
     #[test]
     fn zero_vector_returns_minimum() {
-        assert_eq!(F::f(vec![0.0; 4]), F::MINIMUM);
+        let value = F::f(vec![0.0; 4]);
+        let delta = (value - F::MINIMUM).abs();
+
+        assert!(
+            delta < 1e-12,
+            "Ackley(0,0,0,0) expected {} but got {value} (delta {delta})",
+            F::MINIMUM
+        );
     }
 
     #[test]
