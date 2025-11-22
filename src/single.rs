@@ -186,8 +186,7 @@ impl SingleObjective for Ackley {
             square_sum += xi.powi(2);
             cosine_sum += (2.0 * std::f64::consts::PI * xi).cos();
         }
-        let mean_square = square_sum / (n as f64);
-        fx -= 20.0 * (-0.2 * mean_square.sqrt()).exp();
+        fx -= 20.0 * (-0.2 * (square_sum / (n as f64)).sqrt()).exp();
         fx -= (cosine_sum / (n as f64)).exp();
         fx + std::f64::consts::E + 20.0
     }
@@ -214,16 +213,26 @@ mod ackley_tests {
 
     #[test]
     fn zero_vector_returns_minimum() {
-        let value = F::f(vec![0.0; F::LOW_D]);
-        assert!((value - F::MINIMUM).abs() < f64::EPSILON);
+        let value = F::f(vec![0.0; 4]);
+        let delta = (value - F::MINIMUM).abs();
+
+        assert!(
+            delta < 1e-12,
+            "Ackley(0,0,0,0) expected {} but got {value} (delta {delta})",
+            F::MINIMUM
+        );
     }
 
     #[test]
-    fn small_vector_matches_reference_value() {
-        let value = F::f(vec![0.1, 0.2]);
-        let expected = 1.591_889_516_716_467_f64;
-        let tolerance = 1e-12;
-        assert!((value - expected).abs() < tolerance);
+    fn known_vector_matches_expected_value() {
+        let value = F::f(vec![1.0, 1.0]);
+        let expected = 3.625_384_938_440_811_6;
+        let delta = (value - expected).abs();
+
+        assert!(
+            delta < 1e-12,
+            "Ackley(1,1) expected {expected} but got {value} (delta {delta})"
+        );
     }
 }
 
@@ -349,7 +358,7 @@ impl Bounded for Ridge {
 }
 
 impl SingleObjective for Ridge {
-    /// The global minimum is constant and zero
+    /// The global minimum equals the first coordinate of the minimizer.
     const MINIMUM: f64 = -5.0;
 
     /// Function for evaluating
@@ -383,6 +392,23 @@ mod ridge_tests {
     #[test]
     fn high_d() {
         F::check_minimizer(F::HIGH_D);
+    }
+
+    #[test]
+    fn f_matches_minimum() {
+        let minimizer = F::minimizer(F::LOW_D);
+
+        let difference = (F::f(minimizer) - F::MINIMUM).abs();
+
+        assert!(difference <= f64::EPSILON);
+    }
+
+    #[test]
+    fn minimizer_respects_dimension() {
+        let dimension = 5;
+        let minimizer = F::minimizer(dimension);
+
+        assert_eq!(minimizer.len(), dimension);
     }
 }
 
@@ -488,6 +514,136 @@ mod salomon_tests {
     #[test]
     fn high_d() {
         F::check_minimizer(F::HIGH_D);
+    }
+}
+
+/// Himmelblau function.
+///
+/// The function is defined as `f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2` and has
+/// four global minima at `(3, 2)`, `(-2.805118, 3.131312)`, `(-3.779310, -3.283186)`, and
+/// `(3.584428, -1.848126)` where the function value is `0`.
+///
+/// # Examples
+/// ```
+/// use benchfun::{Himmelblau, SingleObjective};
+///
+/// let value = Himmelblau::f(vec![3.0, 2.0]);
+/// assert!((value - Himmelblau::MINIMUM).abs() < f64::EPSILON);
+/// ```
+pub struct Himmelblau {}
+
+impl FixedDimensional for Himmelblau {
+    const D: usize = 2;
+}
+
+impl UnConstrained for Himmelblau {}
+
+impl Bounded for Himmelblau {
+    /// The recommended search domain for the Himmelblau function.
+    const BOUNDS: (f64, f64) = (-6.0, 6.0);
+}
+
+impl SingleObjective for Himmelblau {
+    /// The global minimum value across all known minimizers.
+    const MINIMUM: f64 = 0.0;
+
+    /// Evaluates the Himmelblau function at the provided 2D point.
+    fn f(x: Vec<f64>) -> f64 {
+        Self::check_input(x.clone());
+        let x0 = x[0];
+        let x1 = x[1];
+        (x0.powi(2) + x1 - 11.0).powi(2) + (x0 + x1.powi(2) - 7.0).powi(2)
+    }
+
+    /// Returns one of the global minimizers `(3, 2)`.
+    fn minimizer(_n: usize) -> Vec<f64> {
+        vec![3.0, 2.0]
+    }
+}
+
+#[cfg(test)]
+mod himmelblau_tests {
+    use super::{Bounded, FixedDimensional, Himmelblau as F, SingleObjective};
+
+    #[test]
+    fn evaluates_known_minima() {
+        let minimizers = vec![
+            vec![3.0, 2.0],
+            vec![-2.805_118, 3.131_312],
+            vec![-3.779_310, -3.283_186],
+            vec![3.584_428, -1.848_126],
+        ];
+
+        for minimizer in minimizers {
+            assert!((F::f(minimizer.clone()) - F::MINIMUM).abs() < 1e-10);
+            assert!(F::in_bounds(minimizer));
+        }
+    }
+
+    #[test]
+    fn minimizer_respects_bounds() {
+        assert!(F::in_bounds(F::minimizer(F::D)));
+    }
+}
+
+/// Beale function.
+///
+/// The function is defined as
+/// `f(x, y) = (1.5 - x + xy)^2 + (2.25 - x + xy^2)^2 + (2.625 - x + xy^3)^2` and reaches a
+/// global minimum of `0` at `(3, 0.5)`.
+///
+/// # Examples
+/// ```
+/// use benchfun::{Beale, SingleObjective};
+///
+/// let value = Beale::f(vec![3.0, 0.5]);
+/// assert!((value - Beale::MINIMUM).abs() < f64::EPSILON);
+/// ```
+pub struct Beale {}
+
+impl FixedDimensional for Beale {
+    const D: usize = 2;
+}
+
+impl UnConstrained for Beale {}
+
+impl Bounded for Beale {
+    /// The recommended search domain for the Beale function.
+    const BOUNDS: (f64, f64) = (-4.5, 4.5);
+}
+
+impl SingleObjective for Beale {
+    /// The global minimum of the Beale function.
+    const MINIMUM: f64 = 0.0;
+
+    /// Evaluates the Beale function at the provided 2D point.
+    fn f(x: Vec<f64>) -> f64 {
+        Self::check_input(x.clone());
+        let x0 = x[0];
+        let x1 = x[1];
+        (1.5 - x0 + x0 * x1).powi(2)
+            + (2.25 - x0 + x0 * x1.powi(2)).powi(2)
+            + (2.625 - x0 + x0 * x1.powi(3)).powi(2)
+    }
+
+    /// Returns the canonical global minimizer `(3, 0.5)`.
+    fn minimizer(_n: usize) -> Vec<f64> {
+        vec![3.0, 0.5]
+    }
+}
+
+#[cfg(test)]
+mod beale_tests {
+    use super::{Beale as F, Bounded, FixedDimensional, SingleObjective};
+
+    #[test]
+    fn evaluates_global_minimum() {
+        assert!((F::f(vec![3.0, 0.5]) - F::MINIMUM).abs() < 1e-12);
+    }
+
+    #[test]
+    fn minimizer_respects_bounds() {
+        assert!(F::in_bounds(F::minimizer(F::D)));
     }
 }
 
