@@ -334,7 +334,7 @@ impl Bounded for Ridge {
 }
 
 impl SingleObjective for Ridge {
-    /// The global minimum is constant and zero
+    /// The global minimum equals the first coordinate of the minimizer.
     const MINIMUM: f64 = -5.0;
 
     /// Function for evaluating
@@ -368,6 +368,21 @@ mod ridge_tests {
     #[test]
     fn high_d() {
         F::check_minimizer(F::HIGH_D);
+    }
+
+    #[test]
+    fn f_matches_minimum() {
+        let minimizer = F::minimizer(F::LOW_D);
+
+        assert_eq!(F::f(minimizer), F::MINIMUM);
+    }
+
+    #[test]
+    fn minimizer_respects_dimension() {
+        let dimension = 5;
+        let minimizer = F::minimizer(dimension);
+
+        assert_eq!(minimizer.len(), dimension);
     }
 }
 
